@@ -1,0 +1,10 @@
+.DS_Store
+*~
+*.swp
+data/*
+*.gem
+.bundle
+doc
+log
+Gemfile.lock
+.rbenv-version
