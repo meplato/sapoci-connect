@@ -16,7 +16,7 @@ module SAPOCI
     #     builder.use SAPOCI::Connect::Middleware::FollowRedirects
     #     builder.use SAPOCI::Connect::Middleware::PassCookies
     #     builder.use SAPOCI::Connect::Middleware::BackgroundSearch
-    #     builder.adapter adapter
+    #     builder.adapter :net_http
     #   end
     #   resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
     #   puts resp.status # => 200
