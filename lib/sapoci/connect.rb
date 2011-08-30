@@ -12,7 +12,7 @@ module SAPOCI
     # If you need to follow redirects and pass cookies along, you should
     # initialize and use Faraday with this pattern:
     #
-    #   conn = Faraday.new(uri.to_s, :params => params) do |builder| 
+    #   conn = Faraday.new("http://shop.com/path", :params => {"optional" => "value"}) do |builder| 
     #     builder.use SAPOCI::Connect::Middleware::FollowRedirects
     #     builder.use SAPOCI::Connect::Middleware::PassCookies
     #     builder.use SAPOCI::Connect::Middleware::BackgroundSearch
