@@ -18,12 +18,18 @@ end
 module SAPOCI::Connect
   class TestCase < Test::Unit::TestCase
     #ADAPTERS = [:typhoeus] #[:net_http, :em_synchrony, :typhoeus]
-    #ADAPTERS = [:net_http, :em_synchrony]
-    ADAPTERS = [:net_http]
+    ADAPTERS = [:net_http, :em_synchrony]
+    #ADAPTERS = [:net_http]
 
     def test_default
       assert true
     end unless defined? ::MiniTest
+
+    def build_connection(url, options = {})
+      Faraday.new(url, options) do |builder|
+        builder.adapter :net_http
+      end
+    end
   end
 end
 

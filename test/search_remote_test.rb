@@ -11,13 +11,23 @@ class SearchRemoteTest < SAPOCI::Connect::TestCase
 
     def test_should_return_search_results_from_remote_server
       SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
-        SAPOCI::Connect.default_adapter = adapter
-        hook_url = "http://return.to/me"
-        command = SAPOCI::Connect::Search.new(@url, hook_url)
-        assert data = command.search("toner")
-        #puts command.last_response.body
-        assert_equal 200, command.last_response.status
-        assert data.items.size > 0
+        # Parse URL and query parameters
+        uri = URI.parse(@url)
+        params = Rack::Utils.parse_query(uri.query) if uri.query
+        uri.query = nil
+        # Setup
+        conn = Faraday.new(uri.to_s, :params => params) do |builder| 
+          builder.use SAPOCI::Connect::Middleware::FollowRedirects
+          builder.use SAPOCI::Connect::Middleware::PassCookies
+          builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+          builder.adapter adapter
+        end
+        # Execute
+        assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+        assert_equal 200, resp.status
+        assert doc = resp.body
+        assert doc.is_a?(SAPOCI::Document)
+        assert doc.items.size > 0
       end
     end
     

@@ -7,21 +7,37 @@ class SearchTest < SAPOCI::Connect::TestCase
   end
 
   def test_build_url_generates_correct_urls
-    assert_equal "http://ocisite.com/?SEARCHSTRING=keyword&FUNCTION=BACKGROUND_SEARCH&HOOK_URL=http%3A%2F%2Freturn.to%2Fme",
-                 SAPOCI::Connect::Search.new("http://ocisite.com/", "http://return.to/me").build_url("keyword")
+    stub_request(:get, "http://ocisite.com/path?FUNCTION=BACKGROUND_SEARCH&HOOK_URL=http://return.to/me&SEARCHSTRING=toner&extra-token=123").to_return(:body => "success")
+    conn = build_connection("http://ocisite.com/path")
+    assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me", {"extra-token" => "123"})
+    assert resp.env[:url].is_a?(Addressable::URI)
+    assert_equal                "http", resp.env[:url].scheme
+    assert_equal         "ocisite.com", resp.env[:url].host
+    assert_equal               "/path", resp.env[:url].path
+    assert_equal               "toner", resp.env[:url].query_values["SEARCHSTRING"]
+    assert_equal   "BACKGROUND_SEARCH", resp.env[:url].query_values["FUNCTION"]
+    assert_equal "http://return.to/me", resp.env[:url].query_values["HOOK_URL"]
+    assert_equal                 "123", resp.env[:url].query_values["extra-token"]
+  end
+  
+  def test_background_search_middleware
+    conn = Faraday.new("http://localhost:4567/search") do |builder|
+      builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+      builder.adapter :net_http
+    end
+    assert resp = conn.get
+    assert resp.body.is_a?(SAPOCI::Document)
+    assert_equal 2, resp.body.items.size
   end
 
-  def test_build_url_overrides_with_extra_params
-    assert_equal "http://ocisite.com/?SEARCHSTRING=OVERRIDE-ME&FUNCTION=BACKGROUND_SEARCH&HOOK_URL=http%3A%2F%2Freturn.to%2Fme",
-                 SAPOCI::Connect::Search.new("http://ocisite.com/", "http://return.to/me").build_url("keyword", "SEARCHSTRING" => "OVERRIDE-ME")
+  def test_search_api_injects_bgs_middleware
+    conn = Faraday.new("http://localhost:4567/search") do |builder|
+      builder.adapter :net_http
+    end
+    SAPOCI::Connect.search(conn, "toner", "http://return.to/me", :extra_token => "123")
+    assert conn.builder.handlers.include?(SAPOCI::Connect::Middleware::BackgroundSearch)
   end
 
-  def test_build_url_accepts_params_in_url
-    assert_equal "http://ocisite.com/path?token=123&SEARCHSTRING=keyword&FUNCTION=BACKGROUND_SEARCH&HOOK_URL=http%3A%2F%2Freturn.to%2Fme",
-                 SAPOCI::Connect::Search.new("http://ocisite.com/path", "http://return.to/me", :params => {"token" => "123"}).build_url("keyword")
-  end
-
-    
   def test_should_return_hello_world
     conn = Faraday::Connection.new(:url => "http://localhost:4567")
     assert_equal 200, conn.get("/").status
@@ -29,40 +45,53 @@ class SearchTest < SAPOCI::Connect::TestCase
 
   def test_should_return_search_results
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
-      SAPOCI::Connect.default_adapter = adapter
-      hook_url = "http://return.to/me"
-      command = SAPOCI::Connect::Search.new("http://localhost:4567/search", hook_url)
-      assert data = command.search("toner")
-      assert_equal 200, command.last_response.status
-      assert_equal 2, data.items.size
-      assert_equal "MBA11", data.items[0].vendormat
-      assert_equal "IMAC27", data.items[1].vendormat
+      url = "http://localhost:4567/search"
+      conn = build_connection(url)
+      assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+      assert_equal 200, resp.status
+      assert doc = resp.body
+      assert doc.is_a?(SAPOCI::Document)
+      assert_equal 2, doc.items.size
+      assert_equal "MBA11", doc.items[0].vendormat
+      assert_equal "IMAC27", doc.items[1].vendormat
     end
   end
 
   def test_should_follow_redirects_and_return_search_results
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
-      SAPOCI::Connect.default_adapter = adapter
-      hook_url = "http://return.to/me"
-      command = SAPOCI::Connect::Search.new("http://localhost:4567/search/redirect", hook_url, :params => {"adapter" => adapter})
-      assert data = command.search("toner")
-      assert_equal 200, command.last_response.status
-      assert_equal 2, data.items.size
-      assert_equal "MBA11", data.items[0].vendormat
-      assert_equal "IMAC27", data.items[1].vendormat
+      url = "http://localhost:4567/search/redirect"
+      conn = Faraday.new(url) do |builder| 
+        builder.use SAPOCI::Connect::Middleware::FollowRedirects
+        builder.use SAPOCI::Connect::Middleware::PassCookies
+        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.adapter adapter
+      end
+      assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+      assert_equal 200, resp.status
+      assert doc = resp.body
+      assert doc.is_a?(SAPOCI::Document)
+      assert_equal 2, doc.items.size
+      assert_equal "MBA11", doc.items[0].vendormat
+      assert_equal "IMAC27", doc.items[1].vendormat
     end
   end
 
   def test_should_follow_redirects_and_pass_cookies_and_return_search_results
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
-      SAPOCI::Connect.default_adapter = adapter
-      hook_url = "http://return.to/me"
-      command = SAPOCI::Connect::Search.new("http://localhost:4567/search/redirect-and-cookies", hook_url, :params => {"adapter" => adapter})
-      assert data = command.search("toner")
-      assert_equal 200, command.last_response.status
-      assert_equal 2, data.items.size
-      assert_equal "MBA11", data.items[0].vendormat
-      assert_equal "IMAC27", data.items[1].vendormat
+      url = "http://localhost:4567/search/redirect-and-cookies"
+      conn = Faraday.new(url) do |builder| 
+        builder.use SAPOCI::Connect::Middleware::FollowRedirects
+        builder.use SAPOCI::Connect::Middleware::PassCookies
+        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.adapter adapter
+      end
+      assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+      assert_equal 200, resp.status
+      assert doc = resp.body
+      assert doc.is_a?(SAPOCI::Document)
+      assert_equal 2, doc.items.size
+      assert_equal "MBA11", doc.items[0].vendormat
+      assert_equal "IMAC27", doc.items[1].vendormat
     end
   end
 

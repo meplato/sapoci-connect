@@ -3,6 +3,22 @@
 We use this library to work with eprocurement punchout systems that
 comply to the SAP OCI 4.0 specification.
 
+## Features
+
+### SAP OCI Background Search
+
+It's as simple as this:
+
+    conn = Faraday.new("http://onlineshop.com/path", :params => {"token" => "123"}) do |builder| 
+      builder.use SAPOCI::Connect::Middleware::FollowRedirects
+      builder.use SAPOCI::Connect::Middleware::PassCookies
+      builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+      builder.adapter adapter
+    end
+    resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+    puts resp.status # => 200
+    puts resp.body   # => <SAPOCI::Document>
+
 ## Testing
 
 Here's how to test locally:

@@ -4,8 +4,8 @@ extra_rdoc_files = ['CHANGELOG.md', 'LICENSE', 'README.md']
 
 Gem::Specification.new do |s|
   s.name = 'sapoci-connect'
-  s.version = '0.1.0'
-  s.date = "2011-08-29"
+  s.version = '0.1.1'
+  s.date = "2011-08-30"
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.6") if s.respond_to? :required_rubygems_version=
   s.authors = ['Oliver Eilhard']
   s.description = %q{HTTP client library for working with SAP OCI compliant servers.}
