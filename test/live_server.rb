@@ -8,7 +8,7 @@ VALID_SEARCH_RESPONSE = <<HTML
     <form method="POST" action="http://return.to/me">
       <input type="hidden" name="NEW_ITEM-DESCRIPTION[1]" value="Apple MacBook Air 11&quot;">
       <input type="hidden" name="NEW_ITEM-QUANTITY[1]" value="1.00">
-      <input type="hidden" name="NEW_ITEM-UNIT[1]" value="1">
+      <input type="hidden" name="NEW_ITEM-UNIT[1]" value="PCE">
       <input type="hidden" name="NEW_ITEM-PRICE[1]" value="999.90">
       <input type="hidden" name="NEW_ITEM-CURRENCY[1]" value="EUR">
       <input type="hidden" name="NEW_ITEM-PRICEUNIT[1]" value="1">
@@ -19,7 +19,7 @@ VALID_SEARCH_RESPONSE = <<HTML
 
       <input type="hidden" name="NEW_ITEM-DESCRIPTION[2]" value="Apple iMac 27&quot;">
       <input type="hidden" name="NEW_ITEM-QUANTITY[2]" value="2.00">
-      <input type="hidden" name="NEW_ITEM-UNIT[2]" value="1">
+      <input type="hidden" name="NEW_ITEM-UNIT[2]" value="PCE">
       <input type="hidden" name="NEW_ITEM-PRICE[2]" value="1799.00">
       <input type="hidden" name="NEW_ITEM-CURRENCY[2]" value="EUR">
       <input type="hidden" name="NEW_ITEM-PRICEUNIT[2]" value="1">

@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'optparse'
+require 'uri'
+
+$LOAD_PATH << File.expand_path(File.dirname(__FILE__) + '/../lib')
+require 'sapoci/connect'
+require 'faraday'
+require 'rack'
+require 'sapoci'
+
+options = OptionParser.new do |opts|
+  opts.on_tail("-?", "-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+end
+
+begin
+  options.parse!(ARGV)
+
+  # Parameters
+  url = ARGV[0]
+  keywords = ARGV[1]
+
+  # Parse URL and query parameters
+  uri = URI.parse(url)
+  params = Rack::Utils.parse_query(uri.query) if uri.query
+  uri.query = nil
+
+  # Setup
+  conn = Faraday.new(uri.to_s, :params => params) do |builder| 
+    builder.use SAPOCI::Connect::Middleware::FollowRedirects
+    builder.use SAPOCI::Connect::Middleware::PassCookies
+    builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+    builder.adapter :net_http
+  end
+
+  # Execute
+  resp = SAPOCI::Connect.search(conn, keywords, "http://return.to/me")
+  if resp.status == 200
+    doc = resp.body
+    $stdout.puts "%3s %-15s %-30s %s" % ["Idx", "Vendormat", "Description", "Price per unit"]
+    $stdout.puts "".ljust(98, '-')
+    doc.items.each do |item|
+      $stdout.puts "%3s %-15s %-30s %10.3f %-3s per %9.2f %-3s" % [item.index, item.vendormat, item.description, item.price, item.currency, item.priceunit, item.unit]
+    end
+    $stdout.puts "===> #{doc.items.size} items"
+    exit 0
+  elsif resp.status == 404
+    $stdout.puts "Not found (HTTP status #{resp.status})"
+    exit 1
+  elsif resp.status == 500
+    $stdout.puts "Server crashed (HTTP status #{resp.status})"
+    exit 1
+  else
+    $stdout.puts "Error: HTTP status code=#{resp.status}"
+    exit 1
+  end
+
+rescue => e
+  $stderr.print "#{e.class}: " unless e.class == RuntimeError
+  $stderr.puts  e.message
+  exit 1
+end
+
+

@@ -2,6 +2,8 @@
 
 * Simplify API by separating connection initialization (Faraday) and OCI
   handling via Faraday middleware.
+* Added `bin/sapoci-search` script to perform, you name it, SAP OCI
+  background search.
 
 *2011-08-29 (0.1.0)*
 
