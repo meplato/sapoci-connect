@@ -1,4 +1,4 @@
-# SAPOCI Connect
+# SAP OCI Connect
 
 We use this library to work with eprocurement punchout systems that
 comply to the SAP OCI 4.0 specification.
@@ -41,7 +41,7 @@ To test external servers, use the REMOTE environment variable:
 Standing on the shoulder of giants, where giants include:
 
 * Rick Olson for [faraday](https://github.com/technoweenie/faraday),
-* Ilya Grigorik for [em-synchrony](https://github.com/igrigorik/em-synchrony)
+* Ilya Grigorik for [em-synchrony](https://github.com/igrigorik/em-synchrony),
   [em-http-request](https://github.com/igrigorik/em-http-request) and stuff,
 * David Balatero and Paul Dix for [typhoeus](https://github.com/dbalatero/typhoeus)
 
