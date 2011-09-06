@@ -25,7 +25,8 @@ class SearchRemoteTest < SAPOCI::Connect::TestCase
         # Execute
         assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
         assert_equal 200, resp.status
-        assert doc = resp.body
+        assert resp.body.is_a? String
+        assert doc = resp.env[:sapoci]
         assert doc.is_a?(SAPOCI::Document)
         assert doc.items.size > 0
       end

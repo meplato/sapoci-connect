@@ -15,9 +15,14 @@ It's as simple as this:
       builder.use SAPOCI::Connect::Middleware::BackgroundSearch
       builder.adapter :net_http
     end
-    resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+
+    conn.options[:timeout] = 5
+    conn.options[:open_timeout] = 10
+
+    resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
     puts resp.status # => 200
     puts resp.body   # => <SAPOCI::Document>
+    puts resp.env[:raw_body]   # => "<html>...</html>"
 
 Review [Faraday](https://github.com/technoweenie/faraday) for details on 
 connection initiation.

@@ -11,7 +11,7 @@ module SAPOCI
           @app.call(env).on_complete do |resp|
             case env[:status]
             when 200
-              env[:body] = SAPOCI::Document.from_html(env[:body])
+              env[:sapoci] = SAPOCI::Document.from_html(env[:body])
             else
             end
           end

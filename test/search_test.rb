@@ -26,8 +26,10 @@ class SearchTest < SAPOCI::Connect::TestCase
       builder.adapter :net_http
     end
     assert resp = conn.get
-    assert resp.body.is_a?(SAPOCI::Document)
-    assert_equal 2, resp.body.items.size
+    assert resp.body.is_a?(String)
+    assert doc = resp.env[:sapoci]
+    assert doc.is_a?(SAPOCI::Document)
+    assert_equal 2, doc.items.size
   end
 
   def test_search_api_injects_bgs_middleware
@@ -49,7 +51,8 @@ class SearchTest < SAPOCI::Connect::TestCase
       conn = build_connection(url)
       assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
-      assert doc = resp.body
+      assert resp.body.is_a? String
+      assert doc = resp.env[:sapoci]
       assert doc.is_a?(SAPOCI::Document)
       assert_equal 2, doc.items.size
       assert_equal "MBA11", doc.items[0].vendormat
@@ -63,7 +66,8 @@ class SearchTest < SAPOCI::Connect::TestCase
       conn = build_connection(url)
       assert resp = SAPOCI::Connect.search(:post, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
-      assert doc = resp.body
+      assert resp.body.is_a? String
+      assert doc = resp.env[:sapoci]
       assert doc.is_a?(SAPOCI::Document)
       assert_equal 2, doc.items.size
       assert_equal "MBA11", doc.items[0].vendormat
@@ -82,7 +86,8 @@ class SearchTest < SAPOCI::Connect::TestCase
       end
       assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
-      assert doc = resp.body
+      assert resp.body.is_a? String
+      assert doc = resp.env[:sapoci]
       assert doc.is_a?(SAPOCI::Document)
       assert_equal 2, doc.items.size
       assert_equal "MBA11", doc.items[0].vendormat
@@ -101,7 +106,8 @@ class SearchTest < SAPOCI::Connect::TestCase
       end
       assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
-      assert doc = resp.body
+      assert resp.body.is_a? String
+      assert doc = resp.env[:sapoci]
       assert doc.is_a?(SAPOCI::Document)
       assert_equal 2, doc.items.size
       assert_equal "MBA11", doc.items[0].vendormat
@@ -120,7 +126,8 @@ class SearchTest < SAPOCI::Connect::TestCase
       end
       assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
-      assert doc = resp.body
+      assert resp.body.is_a? String
+      assert doc = resp.env[:sapoci]
       assert doc.is_a?(SAPOCI::Document)
       assert_equal 2, doc.items.size
       assert_equal "MBA11", doc.items[0].vendormat

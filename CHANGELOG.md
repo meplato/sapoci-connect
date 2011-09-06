@@ -1,3 +1,9 @@
+*2011-09-06 (0.1.3)*
+
+* Changed middleware for background search to put
+  `SAPOCI::Document` into `response.env[:sapoci]` 
+  instead of `response.env[:body]`.
+
 *2011-09-06 (0.1.2)*
 
 * Changed semantics of search to always add HTTP method, 
