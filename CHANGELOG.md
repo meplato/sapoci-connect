@@ -1,3 +1,7 @@
+*2011-09-06 (0.1.4)*
+
+* Make POSTs really post as encoded name/value pairs in the body
+
 *2011-09-06 (0.1.3)*
 
 * Changed middleware for background search to put

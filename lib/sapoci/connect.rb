@@ -25,15 +25,29 @@ module SAPOCI
     #   puts resp.body   # => <SAPOCI::Document>
     #
     def self.search(method, connection, keywords, hook_url, extra_params = nil)
-      connection.params["FUNCTION"]     = "BACKGROUND_SEARCH"
-      connection.params["SEARCHSTRING"] = keywords
-      connection.params["HOOK_URL"]     = hook_url
-      connection.params.update(extra_params) if extra_params
-      # TODO inject standard middleware
+      params = {
+        "FUNCTION" => "BACKGROUND_SEARCH",
+        "SEARCHSTRING" => keywords,
+        "HOOK_URL" => hook_url
+      }
+      params.update(extra_params) if extra_params
+
       unless connection.builder.handlers.include?(SAPOCI::Connect::Middleware::BackgroundSearch)
         connection.use SAPOCI::Connect::Middleware::BackgroundSearch
       end
-      connection.send(method.to_sym)
+
+      case method.to_sym
+      when :get
+        connection.get do |req|
+          req.params = params
+        end
+      when :post
+        connection.post do |req|
+          req.body = Faraday::Utils.build_nested_query params
+        end
+      else
+        raise "SAPOCI::Connect.search only allows :get or :post requests"
+      end
     end
 
   end

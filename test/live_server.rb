@@ -32,6 +32,11 @@ VALID_SEARCH_RESPONSE = <<HTML
 </html>
 HTML
 
+def assert_search_params
+  halt 500, "FUNCTION parameter is wrong: #{params['FUNCTION']}" unless params['FUNCTION'] == "BACKGROUND_SEARCH"
+  halt 500, "SEARCHSTRING parameter is missing" unless params['SEARCHSTRING']
+  halt 500, "HOOK_URL parameter is missing" unless params['HOOK_URL']
+end
 
 get '/' do
   'hello world'
@@ -39,21 +44,25 @@ end
 
 get '/search' do
   content_type :html
+  assert_search_params
   VALID_SEARCH_RESPONSE
 end
 
 post '/search-with-post' do
   content_type :html
+  assert_search_params
   VALID_SEARCH_RESPONSE
 end
 
 get '/search-timeout' do
   content_type :html
+  assert_search_params
   sleep(10)
   VALID_SEARCH_RESPONSE
 end
 
 get '/search/redirect' do
+  assert_search_params
   redirect '/search/redirect/target'
 end
 
@@ -63,6 +72,7 @@ get '/search/redirect/target' do
 end
 
 get '/search/redirect-with-relative-location' do
+  assert_search_params
   status 302
   headers 'Location' => '/search/redirect-with-relative-location/target'
   throw :halt
@@ -75,6 +85,7 @@ end
 
 get '/search/redirect-and-cookies' do
   response.set_cookie "session_id", "secret"
+  assert_search_params
   redirect "/search/redirect-and-cookies/target"
 end
 

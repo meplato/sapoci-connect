@@ -21,11 +21,25 @@ class SearchTest < SAPOCI::Connect::TestCase
   end
   
   def test_background_search_middleware
-    conn = Faraday.new("http://localhost:4567/search") do |builder|
+    params = {'FUNCTION' => 'BACKGROUND_SEARCH', 'SEARCHSTRING' => '*', 'HOOK_URL' => 'http://test.local'}
+    conn = Faraday.new("http://localhost:4567/search", :params => params) do |builder|
       builder.use SAPOCI::Connect::Middleware::BackgroundSearch
       builder.adapter :net_http
     end
     assert resp = conn.get
+    assert resp.body.is_a?(String)
+    assert doc = resp.env[:sapoci]
+    assert doc.is_a?(SAPOCI::Document)
+    assert_equal 2, doc.items.size
+  end
+  
+  def test_background_search_middleware_with_post
+    body = {'FUNCTION' => 'BACKGROUND_SEARCH', 'SEARCHSTRING' => '*', 'HOOK_URL' => 'http://test.local'}
+    conn = Faraday.new("http://localhost:4567/search-with-post") do |builder|
+      builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+      builder.adapter :net_http
+    end
+    assert resp = conn.post { |req| req.body = Faraday::Utils.build_nested_query(body) }
     assert resp.body.is_a?(String)
     assert doc = resp.env[:sapoci]
     assert doc.is_a?(SAPOCI::Document)
