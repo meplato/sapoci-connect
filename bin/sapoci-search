@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require 'optparse'
+require 'ostruct'
 require 'uri'
 
 $LOAD_PATH << File.expand_path(File.dirname(__FILE__) + '/../lib')
@@ -9,7 +10,15 @@ require 'faraday'
 require 'rack'
 require 'sapoci'
 
-options = OptionParser.new do |opts|
+options = OpenStruct.new
+parser = OptionParser.new do |opts|
+  opts.on("-d", "--[no-]debug", "Show raw response") do |o|
+    options.debug = o
+  end
+  
+  opts.separator ""
+  opts.separator "Common options:"
+
   opts.on_tail("-?", "-h", "--help", "Show this message") do
     puts opts
     exit
@@ -17,7 +26,7 @@ options = OptionParser.new do |opts|
 end
 
 begin
-  options.parse!(ARGV)
+  parser.parse!(ARGV)
 
   # Parameters
   url = ARGV[0]
@@ -29,7 +38,7 @@ begin
   uri.query = nil
 
   # Setup
-  conn = Faraday.new(uri.to_s, :params => params) do |builder| 
+  conn = Faraday.new(uri.to_s, :ssl => {:verify => true}) do |builder| 
     builder.use SAPOCI::Connect::Middleware::FollowRedirects
     builder.use SAPOCI::Connect::Middleware::PassCookies
     builder.use SAPOCI::Connect::Middleware::BackgroundSearch
@@ -37,26 +46,31 @@ begin
   end
 
   # Execute
-  resp = SAPOCI::Connect.search(:get, conn, keywords, "http://return.to/me")
+  resp = SAPOCI::Connect.search(:get, conn, keywords, "http://return.to/me", params)
   if resp.status == 200
-    doc = resp.body
+    doc = resp.env[:sapoci]
     $stdout.puts "%3s %-15s %-30s %s" % ["Idx", "Vendormat", "Description", "Price per unit"]
     $stdout.puts "".ljust(98, '-')
     doc.items.each do |item|
       $stdout.puts "%3s %-15s %-30s %10.3f %-3s per %9.2f %-3s" % [item.index, item.vendormat, item.description, item.price, item.currency, item.priceunit, item.unit]
     end
     $stdout.puts "===> #{doc.items.size} items"
+    $stdout.puts resp.body.to_s if options.debug
     exit 0
   elsif resp.status == 404
     $stdout.puts "Not found (HTTP status #{resp.status})"
+    $stdout.puts resp.body.to_s if options.debug
     exit 1
   elsif resp.status == 500
     $stdout.puts "Server crashed (HTTP status #{resp.status})"
+    $stdout.puts resp.body.to_s if options.debug
     exit 1
   else
     $stdout.puts "Error: HTTP status code=#{resp.status}"
+    $stdout.puts resp.body.to_s if options.debug
     exit 1
   end
+
 
 rescue => e
   $stderr.print "#{e.class}: " unless e.class == RuntimeError
