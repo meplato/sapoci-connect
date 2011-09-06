@@ -18,11 +18,13 @@ module SAPOCI
     #     builder.use SAPOCI::Connect::Middleware::BackgroundSearch
     #     builder.adapter :net_http
     #   end
-    #   resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+    #   conn.options[:timeout] = 3
+    #   conn.options[:open_timeout] = 5
+    #   resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
     #   puts resp.status # => 200
     #   puts resp.body   # => <SAPOCI::Document>
     #
-    def self.search(connection, keywords, hook_url, extra_params = nil)
+    def self.search(method, connection, keywords, hook_url, extra_params = nil)
       connection.params["FUNCTION"]     = "BACKGROUND_SEARCH"
       connection.params["SEARCHSTRING"] = keywords
       connection.params["HOOK_URL"]     = hook_url
@@ -31,7 +33,7 @@ module SAPOCI
       unless connection.builder.handlers.include?(SAPOCI::Connect::Middleware::BackgroundSearch)
         connection.use SAPOCI::Connect::Middleware::BackgroundSearch
       end
-      connection.get
+      connection.send(method.to_sym)
     end
 
   end

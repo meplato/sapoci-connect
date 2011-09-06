@@ -9,7 +9,7 @@ class SearchTest < SAPOCI::Connect::TestCase
   def test_build_url_generates_correct_urls
     stub_request(:get, "http://ocisite.com/path?FUNCTION=BACKGROUND_SEARCH&HOOK_URL=http://return.to/me&SEARCHSTRING=toner&extra-token=123").to_return(:body => "success")
     conn = build_connection("http://ocisite.com/path")
-    assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me", {"extra-token" => "123"})
+    assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me", {"extra-token" => "123"})
     assert resp.env[:url].is_a?(Addressable::URI)
     assert_equal                "http", resp.env[:url].scheme
     assert_equal         "ocisite.com", resp.env[:url].host
@@ -34,7 +34,7 @@ class SearchTest < SAPOCI::Connect::TestCase
     conn = Faraday.new("http://localhost:4567/search") do |builder|
       builder.adapter :net_http
     end
-    SAPOCI::Connect.search(conn, "toner", "http://return.to/me", :extra_token => "123")
+    SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me", :extra_token => "123")
     assert conn.builder.handlers.include?(SAPOCI::Connect::Middleware::BackgroundSearch)
   end
 
@@ -47,7 +47,21 @@ class SearchTest < SAPOCI::Connect::TestCase
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
       url = "http://localhost:4567/search"
       conn = build_connection(url)
-      assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+      assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
+      assert_equal 200, resp.status
+      assert doc = resp.body
+      assert doc.is_a?(SAPOCI::Document)
+      assert_equal 2, doc.items.size
+      assert_equal "MBA11", doc.items[0].vendormat
+      assert_equal "IMAC27", doc.items[1].vendormat
+    end
+  end
+
+  def test_should_return_search_results_with_post
+    SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
+      url = "http://localhost:4567/search-with-post"
+      conn = build_connection(url)
+      assert resp = SAPOCI::Connect.search(:post, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
       assert doc = resp.body
       assert doc.is_a?(SAPOCI::Document)
@@ -66,7 +80,26 @@ class SearchTest < SAPOCI::Connect::TestCase
         builder.use SAPOCI::Connect::Middleware::BackgroundSearch
         builder.adapter adapter
       end
-      assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+      assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
+      assert_equal 200, resp.status
+      assert doc = resp.body
+      assert doc.is_a?(SAPOCI::Document)
+      assert_equal 2, doc.items.size
+      assert_equal "MBA11", doc.items[0].vendormat
+      assert_equal "IMAC27", doc.items[1].vendormat
+    end
+  end
+
+  def test_should_follow_redirects_with_relative_location_and_return_search_results
+    SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
+      url = "http://localhost:4567/search/redirect-with-relative-location"
+      conn = Faraday.new(url) do |builder| 
+        builder.use SAPOCI::Connect::Middleware::FollowRedirects
+        builder.use SAPOCI::Connect::Middleware::PassCookies
+        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.adapter adapter
+      end
+      assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
       assert doc = resp.body
       assert doc.is_a?(SAPOCI::Document)
@@ -85,13 +118,27 @@ class SearchTest < SAPOCI::Connect::TestCase
         builder.use SAPOCI::Connect::Middleware::BackgroundSearch
         builder.adapter adapter
       end
-      assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+      assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
       assert_equal 200, resp.status
       assert doc = resp.body
       assert doc.is_a?(SAPOCI::Document)
       assert_equal 2, doc.items.size
       assert_equal "MBA11", doc.items[0].vendormat
       assert_equal "IMAC27", doc.items[1].vendormat
+    end
+  end
+
+  def test_should_timeout
+    SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
+      begin
+        url = "http://localhost:4567/search-timeout"
+        conn = build_connection(url)
+        conn.options[:timeout] = 2
+        conn.options[:open_timeout] = 3
+        resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
+        assert false, "Should receive timeout"
+      rescue Timeout::Error
+      end
     end
   end
 

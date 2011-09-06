@@ -37,7 +37,7 @@ begin
   end
 
   # Execute
-  resp = SAPOCI::Connect.search(conn, keywords, "http://return.to/me")
+  resp = SAPOCI::Connect.search(:get, conn, keywords, "http://return.to/me")
   if resp.status == 200
     doc = resp.body
     $stdout.puts "%3s %-15s %-30s %s" % ["Idx", "Vendormat", "Description", "Price per unit"]

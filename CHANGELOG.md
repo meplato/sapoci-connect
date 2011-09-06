@@ -1,3 +1,11 @@
+*2011-09-06 (0.1.2)*
+
+* Changed semantics of search to always add HTTP method, 
+  i.e. `:get` or `:post`
+* Added test for timeout errors
+* Added test for relative redirects (i.e. redirects without hostname)
+
+
 *2011-08-30 (0.1.1)*
 
 * Simplify API by separating connection initialization (Faraday) and OCI

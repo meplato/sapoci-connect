@@ -23,7 +23,7 @@ class SearchRemoteTest < SAPOCI::Connect::TestCase
           builder.adapter adapter
         end
         # Execute
-        assert resp = SAPOCI::Connect.search(conn, "toner", "http://return.to/me")
+        assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
         assert_equal 200, resp.status
         assert doc = resp.body
         assert doc.is_a?(SAPOCI::Document)

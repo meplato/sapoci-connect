@@ -42,11 +42,33 @@ get '/search' do
   VALID_SEARCH_RESPONSE
 end
 
+post '/search-with-post' do
+  content_type :html
+  VALID_SEARCH_RESPONSE
+end
+
+get '/search-timeout' do
+  content_type :html
+  sleep(10)
+  VALID_SEARCH_RESPONSE
+end
+
 get '/search/redirect' do
   redirect '/search/redirect/target'
 end
 
 get '/search/redirect/target' do
+  content_type :html
+  VALID_SEARCH_RESPONSE
+end
+
+get '/search/redirect-with-relative-location' do
+  status 302
+  headers 'Location' => '/search/redirect-with-relative-location/target'
+  throw :halt
+end
+
+get '/search/redirect-with-relative-location/target' do
   content_type :html
   VALID_SEARCH_RESPONSE
 end
