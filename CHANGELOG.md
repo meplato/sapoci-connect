@@ -1,3 +1,8 @@
+*2011-09-07 (0.1.5)*
+
+* Raise RedirectWithoutLocation error when returning
+  HTTP status 302 without setting the HTTP Location header
+
 *2011-09-06 (0.1.4)*
 
 * Make POSTs really post as encoded name/value pairs in the body

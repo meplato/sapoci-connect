@@ -10,6 +10,15 @@ module SAPOCI
         end
       end
 
+      class RedirectWithoutLocation < Faraday::Error::ClientError
+        attr_reader :response
+
+        def initialize(response)
+          super "redirect without setting HTTP Location header"
+          @response = response
+        end
+      end
+
       class FollowRedirects < Faraday::Middleware
         REDIRECTS    = [301, 302, 303]
         FOLLOW_LIMIT = 5
@@ -28,6 +37,7 @@ module SAPOCI
           response.on_complete do |env|
             if redirect?(response)
               raise RedirectLimitReached, response if limit.zero?
+              raise RedirectWithoutLocation, response if response['location'].blank?
               env[:url] += response['location']
               env[:method] = :get
               response = process(@app.call(env), limit - 1)

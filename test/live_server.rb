@@ -98,3 +98,10 @@ get '/search/redirect-and-cookies/target' do
   end
 end
 
+# Some shops will redirect but not set the location header
+get '/search/redirect-without-location' do
+  assert_search_params
+  status 302
+  throw :halt
+end
+

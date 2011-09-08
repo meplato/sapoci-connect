@@ -163,5 +163,21 @@ class SearchTest < SAPOCI::Connect::TestCase
     end
   end
 
+  def test_should_handle_redirects_without_location_gracefully
+    SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
+      url = "http://localhost:4567/search/redirect-without-location"
+      conn = Faraday.new(url) do |builder| 
+        builder.use SAPOCI::Connect::Middleware::FollowRedirects
+        builder.use SAPOCI::Connect::Middleware::PassCookies
+        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.adapter adapter
+      end
+      assert_raises(SAPOCI::Connect::Middleware::RedirectWithoutLocation) do
+        SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
+      end
+    end
+  end
+
+
 end
 
