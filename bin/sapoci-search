@@ -9,6 +9,7 @@ require 'sapoci/connect'
 require 'faraday'
 require 'rack'
 require 'sapoci'
+require 'active_support/core_ext'
 
 options = OpenStruct.new
 parser = OptionParser.new do |opts|
@@ -75,6 +76,7 @@ begin
 rescue => e
   $stderr.print "#{e.class}: " unless e.class == RuntimeError
   $stderr.puts  e.message
+  $stderr.puts  e.backtrace
   exit 1
 end
 
