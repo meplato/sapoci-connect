@@ -16,6 +16,7 @@ VALID_SEARCH_RESPONSE = <<HTML
       <input type="hidden" name="NEW_ITEM-VENDOR[1]" value="Apple">
       <input type="hidden" name="NEW_ITEM-VENDORMAT[1]" value="MBA11">
       <input type="hidden" name="NEW_ITEM-MATGROUP[1]" value="NOTEBOOK">
+      <input type="hidden" name="NEW_ITEM-LONGTEXT_1:132[]" value="Ein tolles Notebook von Apple.">
 
       <input type="hidden" name="NEW_ITEM-DESCRIPTION[2]" value="Apple iMac 27&quot;">
       <input type="hidden" name="NEW_ITEM-QUANTITY[2]" value="2.00">
@@ -27,6 +28,7 @@ VALID_SEARCH_RESPONSE = <<HTML
       <input type="hidden" name="NEW_ITEM-VENDOR[2]" value="Apple">
       <input type="hidden" name="NEW_ITEM-VENDORMAT[2]" value="IMAC27">
       <input type="hidden" name="NEW_ITEM-MATGROUP[2]" value="DESKTOP">
+      <input type="hidden" name="NEW_ITEM-LONGTEXT_2:132[]" value="Der elegante Desktop-Rechner von Apple.">
     </form>
   </body>
 </html>

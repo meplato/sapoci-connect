@@ -1,3 +1,7 @@
+*2011-09-22 (0.1.6)*
+
+* Fixed parsing issues with longtext field on HTML (from SAPOCI gem)
+
 *2011-09-07 (0.1.5)*
 
 * Raise RedirectWithoutLocation error when returning

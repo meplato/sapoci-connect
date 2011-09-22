@@ -70,7 +70,9 @@ class SearchTest < SAPOCI::Connect::TestCase
       assert doc.is_a?(SAPOCI::Document)
       assert_equal 2, doc.items.size
       assert_equal "MBA11", doc.items[0].vendormat
+      assert_equal "Ein tolles Notebook von Apple.", doc.items[0].longtext
       assert_equal "IMAC27", doc.items[1].vendormat
+      assert_equal "Der elegante Desktop-Rechner von Apple.", doc.items[1].longtext
     end
   end
 
