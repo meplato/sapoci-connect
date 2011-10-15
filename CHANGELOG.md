@@ -1,3 +1,7 @@
+*2011-10-15 (0.1.7)*
+
+* Accept GET and POST on ./bin/sapoci-search
+
 *2011-09-22 (0.1.6)*
 
 * Fixed parsing issues with longtext field on HTML (from SAPOCI gem)

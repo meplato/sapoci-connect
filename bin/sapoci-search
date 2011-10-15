@@ -16,6 +16,10 @@ parser = OptionParser.new do |opts|
   opts.on("-d", "--[no-]debug", "Show raw response") do |o|
     options.debug = o
   end
+
+  opts.on("-p", "--post", "Use POST instead of GET") do |o|
+    options.http_post = o
+  end
   
   opts.separator ""
   opts.separator "Common options:"
@@ -48,7 +52,8 @@ begin
   end
 
   # Execute
-  resp = SAPOCI::Connect.search(:get, conn, keywords, "http://return.to/me", params)
+  method = options.http_post ? :post : :get
+  resp = SAPOCI::Connect.search(method, conn, keywords, "http://return.to/me", params)
   if resp.status == 200
     doc = resp.env[:sapoci]
     $stdout.puts "%3s %-15s %-30s %s" % ["Idx", "Vendormat", "Description", "Price per unit"]
