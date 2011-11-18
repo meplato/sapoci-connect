@@ -1,3 +1,7 @@
+*2011-xx-xx (0.1.8) -- unreleased*
+
+* Hardened sapoci-search and put up a banner in optparse
+
 *2011-10-15 (0.1.7)*
 
 * Accept GET and POST on ./bin/sapoci-search

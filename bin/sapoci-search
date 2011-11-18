@@ -13,6 +13,8 @@ require 'active_support/core_ext'
 
 options = OpenStruct.new
 parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options] url keywords"
+
   opts.on("-d", "--[no-]debug", "Show raw response") do |o|
     options.debug = o
   end
@@ -32,6 +34,12 @@ end
 
 begin
   parser.parse!(ARGV)
+
+  # url and keyword required
+  if ARGV.size < 2
+    puts parser.to_s
+    exit 1
+  end
 
   # Parameters
   url = ARGV[0]
