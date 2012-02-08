@@ -160,6 +160,7 @@ class SearchTest < SAPOCI::Connect::TestCase
         conn.options[:open_timeout] = 3
         resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
         assert false, "Should receive timeout"
+      rescue Faraday::Error::TimeoutError
       rescue Timeout::Error
       end
     end

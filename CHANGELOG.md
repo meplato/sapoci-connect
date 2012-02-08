@@ -1,6 +1,10 @@
-*2011-xx-xx (0.1.8) -- unreleased*
+*2012-02-08 (0.1.8)*
 
 * Hardened sapoci-search and put up a banner in optparse
+* Updated sapoci gem to 0.1.7: Accept (and replace) comma by dot in
+  numeric fields
+* Timeout by Faraday is special: `Faraday::Error::TimeoutError`
+  instead of `Timeout::Error`
 
 *2011-10-15 (0.1.7)*
 
