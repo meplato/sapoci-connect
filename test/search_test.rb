@@ -10,14 +10,15 @@ class SearchTest < SAPOCI::Connect::TestCase
     stub_request(:get, "http://ocisite.com/path?FUNCTION=BACKGROUND_SEARCH&HOOK_URL=http://return.to/me&SEARCHSTRING=toner&extra-token=123").to_return(:body => "success")
     conn = build_connection("http://ocisite.com/path")
     assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me", {"extra-token" => "123"})
-    assert resp.env[:url].is_a?(Addressable::URI)
     assert_equal                "http", resp.env[:url].scheme
     assert_equal         "ocisite.com", resp.env[:url].host
     assert_equal               "/path", resp.env[:url].path
-    assert_equal               "toner", resp.env[:url].query_values["SEARCHSTRING"]
-    assert_equal   "BACKGROUND_SEARCH", resp.env[:url].query_values["FUNCTION"]
-    assert_equal "http://return.to/me", resp.env[:url].query_values["HOOK_URL"]
-    assert_equal                 "123", resp.env[:url].query_values["extra-token"]
+    # Ruby 1.9 uses URI::HTTP, earlier versions used Adressable::URI
+    qsh = Rack::Utils.parse_query(resp.env[:url].query)
+    assert_equal               "toner", qsh["SEARCHSTRING"]
+    assert_equal   "BACKGROUND_SEARCH", qsh["FUNCTION"]
+    assert_equal "http://return.to/me", qsh["HOOK_URL"]
+    assert_equal                 "123", qsh["extra-token"]
   end
   
   def test_background_search_middleware

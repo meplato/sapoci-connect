@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'test/unit'
+require 'rack/utils'
 
 unless $LOAD_PATH.include? 'lib'
   $LOAD_PATH.unshift(File.dirname(__FILE__))
