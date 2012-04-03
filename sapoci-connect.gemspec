@@ -20,9 +20,9 @@ Gem::Specification.new do |s|
   s.test_files = `git ls-files -- {spec}/*`.split("\n")
 
   s.add_dependency 'faraday', '>= 0.7.4'
-  s.add_dependency 'em-synchrony', '~> 1.0.0'
-  s.add_dependency 'em-http-request', '~> 1.0.0'
-  s.add_dependency 'typhoeus', '>= 0.2.4'
+  #s.add_dependency 'em-synchrony', '~> 1.0.0'
+  #s.add_dependency 'em-http-request', '~> 1.0.0'
+  #s.add_dependency 'typhoeus', '>= 0.2.4'
   s.add_dependency 'rack', ['>= 1.1.0', '< 2']
   s.add_dependency 'sapoci', '>= 0.1.7'
   s.add_development_dependency("bundler", "~> 1.0")
