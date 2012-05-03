@@ -1,3 +1,17 @@
+*2012-05-03 (0.1.9)*
+
+* Require Faraday version 0.8.0 or later.
+* Fixed handling of HTTP GET on HTTP redirect, especially 302:
+  There was a problem with echoing the body with HTTP GET, which
+  some proxies don't like (Squid).
+* Fixed cookie handling: Some clients replace cookie values in
+  subsequent requests and, up until now, we simply concatenated
+  them.
+* Used middleware from FaradayMiddleware project, but changed/fixed
+  some issues, e.g. cookie handling and handling the case where
+  a client wants to redirect, but does not provide a Location header.
+
+
 *2012-02-08 (0.1.8)*
 
 * Hardened sapoci-search and put up a banner in optparse
