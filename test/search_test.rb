@@ -24,7 +24,8 @@ class SearchTest < SAPOCI::Connect::TestCase
   def test_background_search_middleware
     params = {'FUNCTION' => 'BACKGROUND_SEARCH', 'SEARCHSTRING' => '*', 'HOOK_URL' => 'http://test.local'}
     conn = Faraday.new("http://localhost:4567/search", :params => params) do |builder|
-      builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+      # builder.response :follow_redirects, :cookies => :all, :limit => 5
+      builder.response :background_search
       builder.adapter :net_http
     end
     assert resp = conn.get
@@ -37,7 +38,8 @@ class SearchTest < SAPOCI::Connect::TestCase
   def test_background_search_middleware_with_post
     body = {'FUNCTION' => 'BACKGROUND_SEARCH', 'SEARCHSTRING' => '*', 'HOOK_URL' => 'http://test.local'}
     conn = Faraday.new("http://localhost:4567/search-with-post") do |builder|
-      builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+      # builder.response :follow_redirects, :cookies => :all, :limit => 5
+      builder.response :background_search
       builder.adapter :net_http
     end
     assert resp = conn.post { |req| req.body = Faraday::Utils.build_nested_query(body) }
@@ -96,9 +98,8 @@ class SearchTest < SAPOCI::Connect::TestCase
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
       url = "http://localhost:4567/search/redirect"
       conn = Faraday.new(url) do |builder| 
-        builder.use SAPOCI::Connect::Middleware::FollowRedirects
-        builder.use SAPOCI::Connect::Middleware::PassCookies
-        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.response :follow_redirects, :cookies => :all, :limit => 5
+        builder.response :background_search
         builder.adapter adapter
       end
       assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
@@ -116,9 +117,8 @@ class SearchTest < SAPOCI::Connect::TestCase
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
       url = "http://localhost:4567/search/redirect-with-relative-location"
       conn = Faraday.new(url) do |builder| 
-        builder.use SAPOCI::Connect::Middleware::FollowRedirects
-        builder.use SAPOCI::Connect::Middleware::PassCookies
-        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.response :follow_redirects, :cookies => :all, :limit => 5
+        builder.response :background_search
         builder.adapter adapter
       end
       assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
@@ -136,9 +136,8 @@ class SearchTest < SAPOCI::Connect::TestCase
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
       url = "http://localhost:4567/search/redirect-and-cookies"
       conn = Faraday.new(url) do |builder| 
-        builder.use SAPOCI::Connect::Middleware::FollowRedirects
-        builder.use SAPOCI::Connect::Middleware::PassCookies
-        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.response :follow_redirects, :cookies => :all, :limit => 5
+        builder.response :background_search
         builder.adapter adapter
       end
       assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
@@ -171,9 +170,8 @@ class SearchTest < SAPOCI::Connect::TestCase
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
       url = "http://localhost:4567/search/redirect-without-location"
       conn = Faraday.new(url) do |builder| 
-        builder.use SAPOCI::Connect::Middleware::FollowRedirects
-        builder.use SAPOCI::Connect::Middleware::PassCookies
-        builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+        builder.response :follow_redirects, :cookies => :all, :limit => 5
+        builder.response :background_search
         builder.adapter adapter
       end
       assert_raises(SAPOCI::Connect::Middleware::RedirectWithoutLocation) do

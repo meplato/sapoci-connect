@@ -17,9 +17,8 @@ class SearchRemoteTest < SAPOCI::Connect::TestCase
         uri.query = nil
         # Setup
         conn = Faraday.new(uri.to_s, :params => params) do |builder| 
-          builder.use SAPOCI::Connect::Middleware::FollowRedirects
-          builder.use SAPOCI::Connect::Middleware::PassCookies
-          builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+          builder.response :follow_redirects, :cookies => :all, :limit => 5
+          builder.response :background_search
           builder.adapter adapter
         end
         # Execute

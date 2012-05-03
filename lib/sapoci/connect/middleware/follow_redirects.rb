@@ -1,6 +1,10 @@
+require 'faraday'
+require 'set'
+
 module SAPOCI
   module Connect
     module Middleware
+      # Public: Exception thrown when the maximum amount of requests is exceeded.
       class RedirectLimitReached < Faraday::Error::ClientError
         attr_reader :response
 
@@ -10,43 +14,139 @@ module SAPOCI
         end
       end
 
+      # Public: Exception thrown when client returns an empty location header
       class RedirectWithoutLocation < Faraday::Error::ClientError
         attr_reader :response
 
         def initialize(response)
-          super "redirect without setting HTTP Location header"
+          super "redirect with empty location header"
           @response = response
         end
       end
 
+      # Public: Follow HTTP 301, 302, 303, and 307 redirects for GET, PATCH, POST,
+      # PUT, and DELETE requests.
+      #
+      # This middleware does not follow the HTTP specification for HTTP 302, by
+      # default, in that it follows the improper implementation used by most major
+      # web browsers which forces the redirected request to become a GET request
+      # regardless of the original request method.
+      #
+      # For HTTP 301, 302, and 303, the original request is transformed into a
+      # GET request to the response Location, by default. However, with standards
+      # compliance enabled, a 302 will instead act in accordance with the HTTP
+      # specification, which will replay the original request to the received
+      # Location, just as with a 307.
+      #
+      # For HTTP 307, the original request is replayed to the response Location,
+      # including original HTTP request method (GET, POST, PUT, DELETE, PATCH),
+      # original headers, and original body.
+      #
+      # This middleware currently only works with synchronous requests; in other
+      # words, it doesn't support parallelism.
       class FollowRedirects < Faraday::Middleware
-        REDIRECTS    = [301, 302, 303]
-        FOLLOW_LIMIT = 5
+        # HTTP methods for which 30x redirects can be followed
+        ALLOWED_METHODS = Set.new [:get, :post, :put, :patch, :delete]
+        # HTTP redirect status codes that this middleware implements
+        REDIRECT_CODES  = Set.new [301, 302, 303, 307]
+        # Keys in env hash which will get cleared between requests
+        ENV_TO_CLEAR    = Set.new [:status, :response, :response_headers]
 
+        # Default value for max redirects followed
+        FOLLOW_LIMIT = 3
+
+        # Public: Initialize the middleware.
+        #
+        # options - An options Hash (default: {}):
+        #           limit - A Numeric redirect limit (default: 3)
+        #           standards_compliant - A Boolean indicating whether to respect
+        #                                 the HTTP spec when following 302
+        #                                 (default: false)
+        #          cookie - Use either an array of strings
+        #                  (e.g. ['cookie1', 'cookie2']) to choose kept cookies
+        #                  or :all to keep all cookies.
         def initialize(app, options = {})
           super(app)
           @options = options
-          @limit   = options[:limit] || FOLLOW_LIMIT
+
+          @replay_request_codes = Set.new [307]
+          @replay_request_codes << 302 if standards_compliant?
         end
 
         def call(env)
-          process(@app.call(env), @limit)
+          perform_with_redirection(env, follow_limit)
         end
 
-        def process(response, limit)
+        private
+
+        def transform_into_get?(response)
+          !@replay_request_codes.include? response.status
+        end
+
+        def perform_with_redirection(env, follows)
+          request_body = env[:body]
+          response = @app.call(env)
+
           response.on_complete do |env|
-            if redirect?(response)
-              raise RedirectLimitReached, response if limit.zero?
-              raise RedirectWithoutLocation, response if response['location'].blank?
-              env[:url] += response['location']
-              env[:method] = :get
-              response = process(@app.call(env), limit - 1)
+            if follow_redirect?(env, response)
+              raise RedirectLimitReached, response if follows.zero?
+              env = update_env(env, request_body, response)
+              response = perform_with_redirection(env, follows - 1)
+            end
+          end
+          response
+        end
+
+        def update_env(env, request_body, response)
+          location = response['location']
+          raise RedirectWithoutLocation, response if location.blank?
+          env[:url] += location
+          if @options[:cookies] && captured_cookies = keep_cookies(env)
+            env[:request_headers]['Cookie'] = captured_cookies
+          end
+
+          if transform_into_get?(response)
+            env[:method] = :get
+            env[:body] = nil
+          else
+            env[:body] = request_body
+          end
+
+          ENV_TO_CLEAR.each {|key| env.delete key }
+
+          env
+        end
+
+        def follow_redirect?(env, response)
+          ALLOWED_METHODS.include? env[:method] and
+            REDIRECT_CODES.include? response.status
+        end
+
+        def follow_limit
+          @options.fetch(:limit, FOLLOW_LIMIT)
+        end
+
+        def keep_cookies(env)
+          cookies = @options.fetch(:cookies, [])
+          response_cookies = env[:response_headers]['Set-Cookie'] #[:cookies]
+          cookies == :all ? response_cookies : selected_request_cookies(response_cookies)
+        end
+
+        def selected_request_cookies(cookies)
+          selected_cookies(cookies)[0...-1]
+        end
+
+        def selected_cookies(cookies)
+          "".tap do |cookie_string|
+            @options[:cookies].each do |cookie|
+              string = /#{cookie}=?[^;]*/.match(cookies)[0] + ';'
+              cookie_string << string
             end
           end
         end
 
-        def redirect?(response)
-          REDIRECTS.include? response.status
+        def standards_compliant?
+          @options.fetch(:standards_compliant, false)
         end
       end
     end

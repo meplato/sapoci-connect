@@ -4,8 +4,8 @@ extra_rdoc_files = ['CHANGELOG.md', 'LICENSE', 'README.md']
 
 Gem::Specification.new do |s|
   s.name = 'sapoci-connect'
-  s.version = '0.1.8'
-  s.date = "2012-02-08"
+  s.version = '0.1.9'
+  s.date = "2012-05-03"
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.6") if s.respond_to? :required_rubygems_version=
   s.authors = ['Oliver Eilhard']
   s.description = %q{HTTP client library for working with SAP OCI compliant servers.}
@@ -19,7 +19,8 @@ Gem::Specification.new do |s|
   s.files = `git ls-files -- {bin,lib,spec}/*`.split("\n") + extra_rdoc_files
   s.test_files = `git ls-files -- {spec}/*`.split("\n")
 
-  s.add_dependency 'faraday', '>= 0.7.4'
+  s.add_dependency 'faraday', '>= 0.8.0'
+  #s.add_dependency 'faraday_middleware', '>= 0.8.7'
   #s.add_dependency 'em-synchrony', '~> 1.0.0'
   #s.add_dependency 'em-http-request', '~> 1.0.0'
   #s.add_dependency 'typhoeus', '>= 0.2.4'

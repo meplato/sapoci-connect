@@ -22,6 +22,10 @@ parser = OptionParser.new do |opts|
   opts.on("-p", "--post", "Use POST instead of GET") do |o|
     options.http_post = o
   end
+
+  opts.on("-P", "--proxy [uri]", "Set proxy server URI") do |uri|
+    options.proxy_uri = uri
+  end
   
   opts.separator ""
   opts.separator "Common options:"
@@ -52,12 +56,19 @@ begin
 
   # Setup
   conn = Faraday.new(uri.to_s, :ssl => {:verify => true}) do |builder| 
-    builder.use SAPOCI::Connect::Middleware::FollowRedirects
-    builder.use SAPOCI::Connect::Middleware::PassCookies
-    builder.use SAPOCI::Connect::Middleware::BackgroundSearch
+    builder.response :follow_redirects, :cookies => :all, :limit => 5
+    builder.response :background_search
     builder.use Faraday::Response::Logger if options.debug
-    builder.adapter :net_http
+    builder.adapter  Faraday.default_adapter
   end
+
+  #h = conn.builder.handlers.find { |h| h.kind_of?(SAPOCI::Connect::Middleware::BackgroundSearch) }
+  #puts "#{h.options}"
+  #exit
+
+  # Respect proxy settings
+  options.proxy_uri ||= ENV['SAPOCI_PROXY_URI']
+  conn.proxy({:uri => options.proxy_uri}) if options.proxy_uri
 
   # Execute
   method = options.http_post ? :post : :get

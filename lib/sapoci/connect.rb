@@ -1,11 +1,17 @@
 require 'faraday'
 require 'sapoci'
 require 'sapoci/connect/middleware/follow_redirects'
-require 'sapoci/connect/middleware/pass_cookies'
 require 'sapoci/connect/middleware/background_search'
 
 module SAPOCI
   module Connect
+
+    # Register Faraday middleware
+    if Faraday.respond_to?(:register_middleware)
+      Faraday.register_middleware :response,
+        :follow_redirects  => lambda { SAPOCI::Connect::Middleware::FollowRedirects },
+        :background_search => lambda { SAPOCI::Connect::Middleware::BackgroundSearch }
+    end
 
     # Perform an OCI background search.
     # 
@@ -13,10 +19,9 @@ module SAPOCI
     # initialize and use Faraday with this pattern:
     #
     #   conn = Faraday.new("http://shop.com/path", :params => {"optional" => "value"}) do |builder| 
-    #     builder.use SAPOCI::Connect::Middleware::FollowRedirects
-    #     builder.use SAPOCI::Connect::Middleware::PassCookies
-    #     builder.use SAPOCI::Connect::Middleware::BackgroundSearch
-    #     builder.adapter :net_http
+    #     builder.response :follow_redirects, :cookies => :all, :limit => 5, :standards_compliant => true
+    #     builder.response :background_search
+    #     builder.adapter  Faraday.default_adapter
     #   end
     #   conn.options[:timeout] = 3
     #   conn.options[:open_timeout] = 5
@@ -33,7 +38,7 @@ module SAPOCI
       params.update(extra_params) if extra_params
 
       unless connection.builder.handlers.include?(SAPOCI::Connect::Middleware::BackgroundSearch)
-        connection.use SAPOCI::Connect::Middleware::BackgroundSearch
+        connection.response :background_search
       end
 
       case method.to_sym
