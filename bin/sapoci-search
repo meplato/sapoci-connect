@@ -62,10 +62,6 @@ begin
     builder.adapter  Faraday.default_adapter
   end
 
-  #h = conn.builder.handlers.find { |h| h.kind_of?(SAPOCI::Connect::Middleware::BackgroundSearch) }
-  #puts "#{h.options}"
-  #exit
-
   # Respect proxy settings
   options.proxy_uri ||= ENV['SAPOCI_PROXY_URI']
   conn.proxy({:uri => options.proxy_uri}) if options.proxy_uri
