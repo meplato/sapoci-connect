@@ -151,6 +151,26 @@ class SearchTest < SAPOCI::Connect::TestCase
     end
   end
 
+  def test_should_follow_redirects_and_pass_cookies_without_domain_and_path_and_return_search_results
+    SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
+      url = "http://localhost:4567/search/redirect-and-cookies-and-domain-and-path"
+      conn = Faraday.new(url) do |builder| 
+        builder.response :follow_redirects, :cookies => :all, :limit => 5
+        builder.response :background_search
+        builder.adapter adapter
+      end
+      assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
+      assert_equal 200, resp.status
+      assert resp.body.is_a? String
+      assert doc = resp.env[:sapoci]
+      assert doc.is_a?(SAPOCI::Document)
+      assert_equal 2, doc.items.size
+      assert_equal "MBA11", doc.items[0].vendormat
+      assert_equal "IMAC27", doc.items[1].vendormat
+    end
+  end
+
+=begin
   def test_should_timeout
     SAPOCI::Connect::TestCase::ADAPTERS.each do |adapter|
       begin
@@ -179,7 +199,7 @@ class SearchTest < SAPOCI::Connect::TestCase
       end
     end
   end
-
+=end
 
 end
 

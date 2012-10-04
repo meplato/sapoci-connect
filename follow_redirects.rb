@@ -1,6 +1,5 @@
 require 'faraday'
 require 'set'
-require 'webrick'
 
 module SAPOCI
   module Connect
@@ -63,12 +62,12 @@ module SAPOCI
         #           standards_compliant - A Boolean indicating whether to respect
         #                                 the HTTP spec when following 302
         #                                 (default: false)
+        #          cookies - Use either an array of strings
+        #                  (e.g. ['cookie1', 'cookie2']) to choose kept cookies
+        #                  or :all to keep all cookies.
         def initialize(app, options = {})
           super(app)
           @options = options
-
-          @options[:cookies] = :all
-          @cookies = []
 
           @replay_request_codes = Set.new [307]
           @replay_request_codes << 302 if standards_compliant?
@@ -99,12 +98,12 @@ module SAPOCI
         end
 
         def update_env(env, request_body, response)
-          location = response['location']
-          raise RedirectWithoutLocation, response if location.to_s.size == 0
-          env[:url] += location
-          
-          if @options[:cookies] && cookie_string = collect_cookies(env)
-            env[:request_headers]['Cookie'] = cookie_string
+          raise RedirectWithoutLocation, response if response['location'].to_s.size == 0
+
+          env[:url] += response['location']
+          if @options[:cookies]
+            cookies = keep_cookies(env)
+            env[:request_headers][:cookies] = cookies unless cookies.nil?
           end
 
           if transform_into_get?(response)
@@ -128,16 +127,22 @@ module SAPOCI
           @options.fetch(:limit, FOLLOW_LIMIT)
         end
 
-        def collect_cookies(env)
-          if response_cookies = env[:response_headers]['Set-Cookie']
-            @cookies = WEBrick::Cookie.parse_set_cookies(response_cookies)
-            @cookies.inject([]) do |result, cookie|
-              # TODO only send back cookies where path is nil or 
-              # path matches according to env[:url]
-              result << cookie.name + "=" + cookie.value
-            end.uniq.join(";")
-          else
-            nil
+        def keep_cookies(env)
+          cookies = @options.fetch(:cookies, [])
+          response_cookies = env[:response_headers][:cookies]
+          cookies == :all ? response_cookies : selected_request_cookies(response_cookies)
+        end
+
+        def selected_request_cookies(cookies)
+          selected_cookies(cookies)[0...-1]
+        end
+
+        def selected_cookies(cookies)
+          "".tap do |cookie_string|
+            @options[:cookies].each do |cookie|
+              string = /#{cookie}=?[^;]*/.match(cookies)[0] + ';'
+              cookie_string << string
+            end
           end
         end
 

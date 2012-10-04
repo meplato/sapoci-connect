@@ -4,8 +4,8 @@ extra_rdoc_files = ['CHANGELOG.md', 'LICENSE', 'README.md']
 
 Gem::Specification.new do |s|
   s.name = 'sapoci-connect'
-  s.version = '0.1.10'
-  s.date = "2012-05-03"
+  s.version = '0.1.11'
+  s.date = "2012-10-03"
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.6") if s.respond_to? :required_rubygems_version=
   s.authors = ['Oliver Eilhard']
   s.description = %q{HTTP client library for working with SAP OCI compliant servers.}
@@ -20,14 +20,15 @@ Gem::Specification.new do |s|
   s.test_files = `git ls-files -- {spec}/*`.split("\n")
 
   s.add_dependency 'faraday', '>= 0.8.4'
+  #s.add_dependency 'cookiejar', '>= 0.3.0'
   #s.add_dependency 'faraday_middleware', '>= 0.8.7'
   #s.add_dependency 'em-synchrony', '~> 1.0.0'
   #s.add_dependency 'em-http-request', '~> 1.0.0'
   #s.add_dependency 'typhoeus', '>= 0.2.4'
-  s.add_dependency 'rack', ['>= 1.1.0', '< 2']
+  s.add_dependency 'rack', ['>= 1.4.1', '< 2']
   s.add_dependency 'sapoci', '>= 0.1.8'
-  s.add_development_dependency("bundler", "~> 1.0")
+  s.add_development_dependency("bundler", "~> 1.2")
   s.add_development_dependency("rdoc", "~> 2.5")
   s.add_development_dependency("rake", ">= 0.9.2")
-  s.add_development_dependency("sinatra", "~> 1.2")
+  s.add_development_dependency("sinatra", "~> 1.3.1")
 end
