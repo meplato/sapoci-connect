@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
   #s.add_dependency 'em-synchrony', '~> 1.0.0'
   #s.add_dependency 'em-http-request', '~> 1.0.0'
   #s.add_dependency 'typhoeus', '>= 0.2.4'
-  s.add_dependency 'rack', ['>= 1.4.1', '< 2']
+  s.add_dependency 'rack', ['>= 1.2.5', '< 2']
   s.add_dependency 'sapoci', '>= 0.1.8'
   s.add_development_dependency("bundler", "~> 1.2")
   s.add_development_dependency("rdoc", "~> 2.5")
