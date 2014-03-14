@@ -1,3 +1,9 @@
+*2014-03-14 (0.1.13)*
+
+* Fix versioning issues
+* Tested both on REE 1.8.7 as well as 2.1.0
+
+
 *2012-05-03 (0.1.9)*
 
 * Require Faraday version 0.8.0 or later.
@@ -40,12 +46,12 @@
 *2011-09-06 (0.1.3)*
 
 * Changed middleware for background search to put
-  `SAPOCI::Document` into `response.env[:sapoci]` 
+  `SAPOCI::Document` into `response.env[:sapoci]`
   instead of `response.env[:body]`.
 
 *2011-09-06 (0.1.2)*
 
-* Changed semantics of search to always add HTTP method, 
+* Changed semantics of search to always add HTTP method,
   i.e. `:get` or `:post`
 * Added test for timeout errors
 * Added test for relative redirects (i.e. redirects without hostname)
