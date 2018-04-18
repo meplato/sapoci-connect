@@ -34,7 +34,7 @@ Here's how to test locally:
     $ # Start a second console
     $ ruby test/live_server.rb
     $ # Back in first console
-    $ rake
+    $ bundle exec rake test
 
 To test external servers, use the REMOTE environment variable:
 
