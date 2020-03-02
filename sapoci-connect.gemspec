@@ -4,8 +4,8 @@ extra_rdoc_files = ['CHANGELOG.md', 'LICENSE', 'README.md']
 
 Gem::Specification.new do |s|
   s.name = 'sapoci-connect'
-  s.version = '0.4.0'
-  s.date = "2019-03-30"
+  s.version = '0.4.1'
+  s.date = "2020-03-02"
   s.required_rubygems_version = Gem::Requirement.new(">= 1.3.6") if s.respond_to? :required_rubygems_version=
   s.authors = ['Oliver Eilhard']
   s.description = %q{HTTP client library for working with SAP OCI compliant servers.}
@@ -27,9 +27,9 @@ Gem::Specification.new do |s|
   #s.add_dependency 'em-http-request', '~> 1.0.0'
   #s.add_dependency 'typhoeus', '>= 0.2.4'
   s.add_dependency 'rack', ['>= 1.6.11']
-  s.add_dependency 'sapoci', '~> 0.4.0'
-  s.add_development_dependency("bundler", "~> 2.0.1")
+  s.add_dependency 'sapoci', '~> 0.4.3'
+  s.add_development_dependency("bundler", "~> 1.17.3")
   s.add_development_dependency("rdoc", "~> 3.12.1")
-  s.add_development_dependency("rake", "~> 10.1")
+  s.add_development_dependency("rake", "~> 12.3.3")
   s.add_development_dependency("sinatra", ">= 1.4.8")
 end
