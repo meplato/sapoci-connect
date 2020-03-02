@@ -20,16 +20,16 @@ Gem::Specification.new do |s|
   s.files = `git ls-files -- {bin,lib,spec}/*`.split("\n") + extra_rdoc_files
   s.test_files = `git ls-files -- {spec}/*`.split("\n")
 
-  s.add_dependency 'faraday', ['~> 0.8', '< 0.9']
+  s.add_dependency 'faraday', '~> 0.8', '< 0.9'
   #s.add_dependency 'cookiejar', '>= 0.3.0'
   #s.add_dependency 'faraday_middleware', '>= 0.8.7'
   #s.add_dependency 'em-synchrony', '~> 1.0.0'
   #s.add_dependency 'em-http-request', '~> 1.0.0'
   #s.add_dependency 'typhoeus', '>= 0.2.4'
-  s.add_dependency 'rack', ['>= 1.6.11']
+  s.add_dependency 'rack', '~> 2.2', '>= 2.2.2'
   s.add_dependency 'sapoci', '~> 0.4.3'
   s.add_development_dependency("bundler", "~> 1.17.3")
   s.add_development_dependency("rdoc", "~> 3.12.1")
   s.add_development_dependency("rake", "~> 12.3.3")
-  s.add_development_dependency("sinatra", ">= 1.4.8")
+  s.add_development_dependency("sinatra", '~> 2.0', '>= 2.0.8.1')
 end
