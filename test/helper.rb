@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rubygems'
 require 'test/unit'
 require 'rack/utils'
@@ -18,8 +20,6 @@ end
 
 module SAPOCI::Connect
   class TestCase < Test::Unit::TestCase
-    #ADAPTERS = [:typhoeus] #[:net_http, :em_synchrony, :typhoeus]
-    #ADAPTERS = [:net_http, :em_synchrony]
     ADAPTERS = [:net_http]
 
     def test_default
@@ -27,13 +27,11 @@ module SAPOCI::Connect
     end unless defined? ::MiniTest
 
     def build_connection(url, options = {})
-      Faraday.new(url, options) do |builder|
-        builder.adapter :net_http
-      end
+      Faraday.new(url, options)
     end
   end
 end
 
 require 'webmock/test_unit'
-WebMock.disable_net_connect!(:allow_localhost => true)
+WebMock.disable_net_connect!(allow_localhost: true)
 

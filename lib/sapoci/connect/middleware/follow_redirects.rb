@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'faraday'
 require 'set'
 require 'webrick'
@@ -6,7 +8,7 @@ module SAPOCI
   module Connect
     module Middleware
       # Public: Exception thrown when the maximum amount of requests is exceeded.
-      class RedirectLimitReached < Faraday::Error::ClientError
+      class RedirectLimitReached < Faraday::ClientError
         attr_reader :response
 
         def initialize(response)
@@ -14,9 +16,9 @@ module SAPOCI
           @response = response
         end
       end
-
+      
       # Public: Exception thrown when client returns an empty location header
-      class RedirectWithoutLocation < Faraday::Error::ClientError
+      class RedirectWithoutLocation < Faraday::ClientError
         attr_reader :response
 
         def initialize(response)
@@ -24,54 +26,62 @@ module SAPOCI
           @response = response
         end
       end
-
-      # Public: Follow HTTP 301, 302, 303, and 307 redirects for GET, PATCH, POST,
-      # PUT, and DELETE requests.
+      
+      # Public: Follow HTTP 301, 302, 303, 307, and 308 redirects.
       #
-      # This middleware does not follow the HTTP specification for HTTP 302, by
-      # default, in that it follows the improper implementation used by most major
-      # web browsers which forces the redirected request to become a GET request
-      # regardless of the original request method.
+      # For HTTP 301, 302, and 303, the original GET, POST, PUT, DELETE, or PATCH
+      # request gets converted into a GET. With `standards_compliant: true`,
+      # however, the HTTP method after 301/302 remains unchanged. This allows you
+      # to opt into HTTP/1.1 compliance and act unlike the major web browsers.
       #
-      # For HTTP 301, 302, and 303, the original request is transformed into a
-      # GET request to the response Location, by default. However, with standards
-      # compliance enabled, a 302 will instead act in accordance with the HTTP
-      # specification, which will replay the original request to the received
-      # Location, just as with a 307.
+      # This middleware currently only works with synchronous requests; i.e. it
+      # doesn't support parallelism.
       #
-      # For HTTP 307, the original request is replayed to the response Location,
-      # including original HTTP request method (GET, POST, PUT, DELETE, PATCH),
-      # original headers, and original body.
+      # Example:
       #
-      # This middleware currently only works with synchronous requests; in other
-      # words, it doesn't support parallelism.
+      #   Faraday.new(url: url) do |faraday|
+      #     faraday.use SAPOCI::Connect::Middleware::FollowRedirects
+      #     faraday.adapter Faraday.default_adapter
+      #   end
       class FollowRedirects < Faraday::Middleware
         # HTTP methods for which 30x redirects can be followed
-        ALLOWED_METHODS = Set.new [:get, :post, :put, :patch, :delete]
+        ALLOWED_METHODS = Set.new %i[head options get post put patch delete]
         # HTTP redirect status codes that this middleware implements
-        REDIRECT_CODES  = Set.new [301, 302, 303, 307]
+        REDIRECT_CODES  = Set.new [301, 302, 303, 307, 308]
         # Keys in env hash which will get cleared between requests
-        ENV_TO_CLEAR    = Set.new [:status, :response, :response_headers]
+        ENV_TO_CLEAR    = Set.new %i[status response response_headers]
 
         # Default value for max redirects followed
         FOLLOW_LIMIT = 3
 
+        # Regex that matches characters that need to be escaped in URLs, sans
+        # the "%" character which we assume already represents an escaped sequence.
+        URI_UNSAFE = %r{[^\-_.!~*'()a-zA-Z\d;/?:@&=+$,\[\]%]}.freeze
+
+        AUTH_HEADER = 'Authorization'
+
         # Public: Initialize the middleware.
         #
         # options - An options Hash (default: {}):
-        #           limit - A Numeric redirect limit (default: 3)
-        #           standards_compliant - A Boolean indicating whether to respect
-        #                                 the HTTP spec when following 302
-        #                                 (default: false)
+        #     :limit                      - A Numeric redirect limit (default: 3)
+        #     :standards_compliant        - A Boolean indicating whether to respect
+        #                                  the HTTP spec when following 301/302
+        #                                  (default: false)
+        #     :callback                   - A callable used on redirects
+        #                                  with the old and new envs
+        #     :cookies                    - An Array of Strings (e.g.
+        #                                  ['cookie1', 'cookie2']) to choose
+        #                                  cookies to be kept, or :all to keep
+        #                                  all cookies (default: []).
+        #     :clear_authorization_header - A Boolean indicating whether the request
+        #                                  Authorization header should be cleared on
+        #                                  redirects (default: true)
         def initialize(app, options = {})
           super(app)
           @options = options
 
-          @options[:cookies] = :all
-          @cookies = []
-
-          @replay_request_codes = Set.new [307]
-          @replay_request_codes << 302 if standards_compliant?
+          @convert_to_get = Set.new [303]
+          @convert_to_get << 301 << 302 unless standards_compliant?
         end
 
         def call(env)
@@ -80,72 +90,115 @@ module SAPOCI
 
         private
 
-        def transform_into_get?(response)
-          !@replay_request_codes.include? response.status
+        def convert_to_get?(response)
+          !%i[head options].include?(response.env[:method]) &&
+            @convert_to_get.include?(response.status)
         end
 
         def perform_with_redirection(env, follows)
           request_body = env[:body]
           response = @app.call(env)
 
-          response.on_complete do |env|
-            if follow_redirect?(env, response)
-              raise RedirectLimitReached, response if follows.zero?
-              env = update_env(env, request_body, response)
-              response = perform_with_redirection(env, follows - 1)
+          response.on_complete do |response_env|
+            if follow_redirect?(response_env, response)
+              raise SAPOCI::Connect::Middleware::RedirectLimitReached, response if follows.zero?
+
+              new_request_env = update_env(response_env.dup, request_body, response)
+              callback&.call(response_env, new_request_env)
+              response = perform_with_redirection(new_request_env, follows - 1)
             end
           end
           response
         end
 
         def update_env(env, request_body, response)
-          location = response['location']
-          raise RedirectWithoutLocation, response if location.to_s.size == 0
-          env[:url] += location
-          
+          redirect_from_url = env[:url].to_s
+          redirect_to_url = safe_escape(response['location'] || '')
+          raise RedirectWithoutLocation, response if redirect_to_url.blank?
+          env[:url] += redirect_to_url
+
           if @options[:cookies] && cookie_string = collect_cookies(env)
             env[:request_headers]['Cookie'] = cookie_string
           end
 
-          if transform_into_get?(response)
+          ENV_TO_CLEAR.each { |key| env.delete key }
+
+          if convert_to_get?(response)
             env[:method] = :get
             env[:body] = nil
           else
             env[:body] = request_body
           end
 
-          ENV_TO_CLEAR.each {|key| env.delete key }
+          clear_authorization_header(env, redirect_from_url, redirect_to_url)
 
           env
         end
 
         def follow_redirect?(env, response)
-          ALLOWED_METHODS.include? env[:method] and
-            REDIRECT_CODES.include? response.status
+          ALLOWED_METHODS.include?(env[:method]) &&
+            REDIRECT_CODES.include?(response.status)
         end
 
         def follow_limit
           @options.fetch(:limit, FOLLOW_LIMIT)
         end
 
+        def standards_compliant?
+          @options.fetch(:standards_compliant, false)
+        end
+
+        def callback
+          @options[:callback]
+        end
+
+        # Internal: escapes unsafe characters from an URL which might be a path
+        # component only or a fully qualified URI so that it can be joined onto an
+        # URI:HTTP using the `+` operator. Doesn't escape "%" characters so to not
+        # risk double-escaping.
+        def safe_escape(uri)
+          uri = uri.split('#')[0] # we want to remove the fragment if present
+          uri.to_s.gsub(URI_UNSAFE) do |match|
+            '%' + match.unpack('H2' * match.bytesize).join('%').upcase
+          end
+        end
+
+        def clear_authorization_header(env, from_url, to_url)
+          return env if redirect_to_same_host?(from_url, to_url)
+          return env unless @options.fetch(:clear_authorization_header, true)
+
+          env[:request_headers].delete(AUTH_HEADER)
+        end
+
+        def redirect_to_same_host?(from_url, to_url)
+          return true if to_url.start_with?('/')
+
+          from_uri = URI.parse(from_url)
+          to_uri = URI.parse(to_url)
+
+          [from_uri.scheme, from_uri.host, from_uri.port] ==
+            [to_uri.scheme, to_uri.host, to_uri.port]
+        end
+
         def collect_cookies(env)
           if response_cookies = env[:response_headers]['Set-Cookie']
             @cookies = WEBrick::Cookie.parse_set_cookies(response_cookies)
             @cookies.inject([]) do |result, cookie|
-              # TODO only send back cookies where path is nil or 
-              # path matches according to env[:url]
-              result << cookie.name + "=" + cookie.value
-            end.uniq.join(";")
+              # only send back name and value
+              if @options[:cookies] == :all || (@options[:cookies].include?(cookie.name.to_sym) || @options[:cookies].include?(cookie.name.to_s))
+                result << cookie.name + "=" + cookie.value
+              end
+            end.to_a.uniq.join(";")
           else
             nil
           end
         end
+      end
 
-        def standards_compliant?
-          @options.fetch(:standards_compliant, false)
-        end
+      # Register known middlewares under symbol
+      if Faraday::Middleware.respond_to?(:register_middleware)
+        Faraday::Middleware.register_middleware oci_follow_redirects: -> { SAPOCI::Connect::Middleware::FollowRedirects }
       end
     end
   end
 end
-

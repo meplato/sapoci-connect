@@ -1,3 +1,10 @@
+*2020-07-28 (0.5.0)*
+
+* Require latest versions of all dependencies, including
+  Faraday 1.0.1 or later.
+* Require Ruby 2.4 or later.
+
+
 *2014-03-14 (0.1.13)*
 
 * Fix versioning issues

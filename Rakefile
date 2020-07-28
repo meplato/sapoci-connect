@@ -15,3 +15,8 @@ task :console do
   sh "irb -rubygems -r ./lib/sapoci/connect.rb"
 end
 
+desc "Start server for tests"
+task :start_test_server do
+  sh "ruby test/live_server.rb"
+end
+

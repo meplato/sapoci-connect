@@ -1,4 +1,11 @@
+# frozen_string_literal: true
+
+# This is a test server that emulates the various behaviours
+# of an OCI shop. Start it with `rake start_test_server` before
+# running any tests.
+
 require 'sinatra'
+require "sinatra/cookies"
 #set :logging, false
 
 VALID_SEARCH_RESPONSE = <<HTML
@@ -86,14 +93,15 @@ get '/search/redirect-with-relative-location/target' do
 end
 
 get '/search/redirect-and-cookies' do
-  response.set_cookie "session_id", :value => "secret"
+  cookies[:session_id] = "secret"
   assert_search_params
   redirect "/search/redirect-and-cookies/target"
 end
 
 get '/search/redirect-and-cookies/target' do
   content_type :html
-  if request.cookies['session_id'] == "secret"
+  puts ">>> Cookies = #{cookies}"
+  if cookies[:session_id] == "secret"
     VALID_SEARCH_RESPONSE
   else
     not_found
@@ -101,7 +109,7 @@ get '/search/redirect-and-cookies/target' do
 end
 
 get '/search/redirect-and-cookies-and-domain-and-path' do
-  response.set_cookie "session_id", {:value => "secret", :path => "/", :httpOnly => true, :expires => Time.utc(2020,1,1)}
+  response.set_cookie "session_id", {value: "secret", path: "/", httpOnly: true, expires: Time.utc(2020,1,1)}
   assert_search_params
   redirect "/search/redirect-and-cookies-and-domain-and-path/target"
 end

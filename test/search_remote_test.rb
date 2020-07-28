@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require File.expand_path(File.join(File.dirname(__FILE__), 'helper'))
 
 class SearchRemoteTest < SAPOCI::Connect::TestCase
@@ -6,7 +8,7 @@ class SearchRemoteTest < SAPOCI::Connect::TestCase
 
     def setup
       @url = ENV['REMOTE']
-      WebMock.disable_net_connect!(:allow_localhost => true, :allow => @url)
+      WebMock.disable_net_connect!(allow_localhost: true, allow: @url)
     end
 
     def test_should_return_search_results_from_remote_server
@@ -16,16 +18,12 @@ class SearchRemoteTest < SAPOCI::Connect::TestCase
         params = Rack::Utils.parse_query(uri.query) if uri.query
         uri.query = nil
         # Setup
-        conn = Faraday.new(uri.to_s, :params => params) do |builder| 
-          builder.response :follow_redirects, :cookies => :all, :limit => 5
-          builder.response :background_search
-          builder.adapter adapter
-        end
+        conn = Faraday.new(uri.to_s, params: params)
         # Execute
         assert resp = SAPOCI::Connect.search(:get, conn, "toner", "http://return.to/me")
         assert_equal 200, resp.status
-        assert resp.body.is_a? String
-        assert doc = resp.env[:sapoci]
+        assert resp.env[:raw_body].is_a?(String)
+        assert doc = resp.body
         assert doc.is_a?(SAPOCI::Document)
         assert doc.items.size > 0
       end

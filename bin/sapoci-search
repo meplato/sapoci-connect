@@ -55,22 +55,22 @@ begin
   uri.query = nil
 
   # Setup
-  conn = Faraday.new(uri.to_s, :ssl => {:verify => true}) do |builder| 
-    builder.response :follow_redirects, :cookies => :all, :limit => 10 
-    builder.response :background_search
-    builder.use Faraday::Response::Logger if options.debug
-    builder.adapter  Faraday.default_adapter
+  conn = Faraday.new(uri.to_s, ssl: {verify: true}) do |builder| 
+    builder.use :oci_follow_redirects, {cookies: :all, limit: 10} 
+    builder.use :oci_background_search, {preserve_raw: true}
+    builder.response :logger if options.debug
+    builder.adapter Faraday.default_adapter
   end
 
   # Respect proxy settings
   options.proxy_uri ||= ENV['SAPOCI_PROXY_URI']
-  conn.proxy({:uri => options.proxy_uri}) if options.proxy_uri
+  conn.proxy({uri: options.proxy_uri}) if options.proxy_uri
 
   # Execute
   method = options.http_post ? :post : :get
-  resp = SAPOCI::Connect.search(method, conn, keywords, "http://return.to/me", params)
+  resp = SAPOCI::Connect.search(method, conn, keywords, "http://validator.meplato.com/oci/punchouts/checkout", params)
   if resp.status == 200
-    doc = resp.env[:sapoci]
+    doc = resp.body
     $stdout.puts "%3s %-15s %-30s %s" % ["Idx", "Vendormat", "Description", "Price per unit"]
     $stdout.puts "".ljust(98, '-')
     doc.items.each do |item|
@@ -78,22 +78,21 @@ begin
       $stdout.puts "    %s" % [item.longtext]
     end
     $stdout.puts "===> #{doc.items.size} items"
-    $stdout.puts resp.body.to_s if options.debug
+    $stdout.puts resp.env[:raw_body].to_s if options.debug
     exit 0
   elsif resp.status == 404
     $stdout.puts "Not found (HTTP status #{resp.status})"
-    $stdout.puts resp.body.to_s if options.debug
+    $stdout.puts resp.env[:raw_body].to_s if options.debug
     exit 1
   elsif resp.status == 500
     $stdout.puts "Server crashed (HTTP status #{resp.status})"
-    $stdout.puts resp.body.to_s if options.debug
+    $stdout.puts resp.env[:raw_body].to_s if options.debug
     exit 1
   else
     $stdout.puts "Error: HTTP status code=#{resp.status}"
-    $stdout.puts resp.body.to_s if options.debug
+    $stdout.puts resp.env[:raw_body].to_s if options.debug
     exit 1
   end
-
 
 rescue => e
   $stderr.print "#{e.class}: " unless e.class == RuntimeError
