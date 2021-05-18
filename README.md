@@ -1,5 +1,7 @@
 # SAP OCI Connect
 
+[![Test](https://github.com/meplato/sapoci-connect/actions/workflows/test.yml/badge.svg)](https://github.com/meplato/sapoci-connect/actions/workflows/test.yml)
+
 We use this library to work with eprocurement punchout systems that
 comply to the SAP OCI 4.0 and 5.0 specification.
 
