@@ -49,7 +49,7 @@ an `SAPOCI::Document` to look into. Notice that `{preserve_raw: true}` needs
 to be passed as well if you want the original HTTP response body in
 `response.env[:raw_body]`.
 
-Review [Faraday](https://github.com/lostisland/faraday) for details on 
+Review [Faraday](https://github.com/lostisland/faraday) for details on
 connection initiation. We require Faraday version 1.0.1 or later.
 
 ## Testing
@@ -57,17 +57,17 @@ connection initiation. We require Faraday version 1.0.1 or later.
 Here's how to test locally:
 
 ```sh
-$ bundle install
-$ # Start a second console
-$ rake start_test_server
-$ # Back in first console
-$ bundle exec rake test
+bundle install
+# Start a second console
+rake start_test_server
+# Back in first console
+bundle exec rake test
 ```
 
 To test remote OCI punchout shops, use the `REMOTE` environment variable:
 
 ```sh
-$ REMOTE="http://remote-site.com/Login.aspx?u=demo&p=secret" rake
+REMOTE="http://remote-site.com/Login.aspx?u=demo&p=secret" rake
 ```
 
 ## Credits
