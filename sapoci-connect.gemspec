@@ -4,7 +4,7 @@ extra_rdoc_files = ['CHANGELOG.md', 'LICENSE', 'README.md']
 
 Gem::Specification.new do |s|
   s.name = 'sapoci-connect'
-  s.version = '0.5.1'
+  s.version = '0.5.2'
   s.summary = %q{The library builds on the sapoci gem and adds working with remotes, parsing its results etc.}
   s.description = %q{HTTP client library for working with SAP OCI compliant servers.}
   s.authors = ['Oliver Eilhard']
@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'faraday', '~> 1.4.1'
   s.add_dependency 'faraday_middleware', '~> 1.0.0'
   s.add_dependency 'rack', '~> 2.0', '>= 2.0.9'
-  s.add_dependency 'sapoci', '~> 0.5.2'
+  s.add_dependency 'sapoci', '~> 0.5.3'
   s.add_dependency 'webrick', '~> 1.6.1'
   s.add_development_dependency("bundler", "~> 2.2.17")
   s.add_development_dependency("rdoc", "~> 6.3.1")
